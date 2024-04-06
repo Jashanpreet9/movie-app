@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import StarRating from "./StarRating";
 import { wait } from "@testing-library/user-event/dist/utils";
 const tempMovieData = [
@@ -54,15 +54,11 @@ const average = (arr) =>
 const KEY = "fb8b52e6";
 export default function App() {
   const [movies, setMovies] = useState([]);
+  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("inception");
   const [selectedId, setSelectedId] = useState(null);
-
-  const [watched, setWatched] = useState(function () {
-    const data = localStorage.getItem("watched");
-    return JSON.parse(data);
-  });
 
   useEffect(
     function () {
@@ -148,7 +144,6 @@ export default function App() {
             <MovieDetails
               selectedId={selectedId}
               onClose={handleClose}
-              watched={watched}
               setWatched={setWatched}
             />
           ) : (
@@ -194,27 +189,6 @@ function Logo() {
 }
 
 function Search({ query, onSetQuery }) {
-  const inputEl = useRef(null);
-
-  useEffect(
-    function () {
-      // const el = document.querySelector(".search");
-      //el.focus(); //manual selection of dom elements
-
-      function callback(e) {
-        if (document.activeElement === inputEl.current) return;
-
-        if (e.code === "Enter") {
-          inputEl.current.focus();
-          onSetQuery("");
-        }
-      }
-
-      document.addEventListener("keydown", callback);
-    },
-    [onSetQuery]
-  );
-
   return (
     <input
       className="search"
@@ -222,7 +196,6 @@ function Search({ query, onSetQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => onSetQuery(e.target.value)}
-      ref={inputEl}
     />
   );
 }
@@ -302,7 +275,7 @@ function Movie({ movie, handleSelect }) {
     </li>
   );
 }
-function MovieDetails({ selectedId, onClose, setWatched, watched }) {
+function MovieDetails({ selectedId, onClose, setWatched }) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [userRating, setUserRating] = useState("");
@@ -317,31 +290,6 @@ function MovieDetails({ selectedId, onClose, setWatched, watched }) {
     Director: director,
     Actors: actors,
   } = movie;
-
-  //if (imdbRating > 8) [top, setTop] = useState("");
-  // if (imdbRating > 8) return <p>early return</p>;
-
-  // const[isTop , setIsTop] = useState(imdbRating>8);
-  // console.log(isTop);
-  // useEffect(function(){
-  //   setIsTop(imdbRating>8);
-  // },[imdbRating])
-
-  // const isTop = imdbRating > 8;
-  // console.log(isTop);
-
-  //const [avgRating, setAvgRating] = useState(0);
-
-  let count = useRef(0);
-
-  useEffect(
-    function () {
-      if (userRating > 0) {
-        count.current = count.current + 1;
-      }
-    },
-    [userRating]
-  );
 
   useEffect(
     function () {
@@ -366,11 +314,9 @@ function MovieDetails({ selectedId, onClose, setWatched, watched }) {
     [onClose]
   );
 
-  function handleAdd(movie) {
-    setWatched((watched) => [...watched, movie]);
-    localStorage.setItem("watched", JSON.stringify([...watched, movie]));
-    //setAvgRating(Number(imdbRating));
-    //setAvgRating((avgRating) => (avgRating + userRating) / 2);
+  function handleAdd() {
+    const watchedMovie = { title, imdbRating, userRating, runtime };
+    setWatched((watched) => [...watched, watchedMovie]);
     onClose();
   }
 
@@ -418,7 +364,6 @@ function MovieDetails({ selectedId, onClose, setWatched, watched }) {
               </p>
             </div>
           </header>
-          {/* {avgRating} */}
           <section>
             <div className="rating">
               <StarRating
@@ -427,7 +372,7 @@ function MovieDetails({ selectedId, onClose, setWatched, watched }) {
                 onSetRating={setUserRating}
               />
               {userRating > 0 && (
-                <button className="btn-add" onClick={() => handleAdd(movie)}>
+                <button className="btn-add" onClick={handleAdd}>
                   Add to Watched List
                 </button>
               )}
